@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Bootstrap -->
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" media="screen">
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<script>
+	 google.charts.load('current', {'packages':['corechart']});
+	</script>
   </head>
   <body>
     <div class="container" id="app_content">
@@ -15,31 +19,46 @@
 			<div class="col-md-4" style="background-color:gray;color:white"><h3><span class="glyphicon glyphicon-fire">&nbsp;</span><span class="balance-gray"></span> Graustrom</h3>
 			</div>
 		</div>
-			<div class="row">
-			<div class="col-md-4"><h1>&nbsp;</h1></div>
-			<div id="inlForm" class="col-md-8">
-		    <h4>Zählerstand aktualisieren</h4>
-			<form class="form-inline" onsubmit="return false;">
-			  <div class="form-group">
-					<label class="sr-only" for="requestedReading">Zählerstand in Watt-Stunden</label>			
-					<div class="input-group">
-					
-					  <input type="number" class="form-control" id="requestedReading" placeholder="Aktueller Zählerstand">
-					
-					  <div class="input-group-addon">Wh</div>
-					</div>
-				
-		
-					<label class="sr-only" for="requestedPLZ">Postleitzahl</label>
-					<div class="input-group">
-						<div class="input-group-addon">Postleitzahl</div>
-						<input type="txt" class="form-control" id="requestedPLZ" placeholder="Postleitzahl">
-					</div>
-
-				<button type="submit" class="btn btn-primary" id="doRequest">Aktualisieren</button>
-			  </div>
-			</form>
+			<div class="row" style="border-top:1px solid #303030">
+			<div class="col-md-4"><h4>&nbsp;</h4>
+			
 			</div>
+			<div id="inlForm" class="col-md-8">
+				<div id="selfView">
+				<h4>Zählerstand aktualisieren</h4>
+				<form class="form-inline" onsubmit="return false;">
+				  <div class="form-group">
+						<label class="sr-only" for="requestedReading">Zählerstand in Watt-Stunden</label>			
+						<div class="input-group">
+						
+						  <input type="number" class="form-control" id="requestedReading" placeholder="Aktueller Zählerstand">
+						
+						  <div class="input-group-addon">Wh</div>
+						</div>
+					
+			
+						<label class="sr-only" for="requestedPLZ">Postleitzahl</label>
+						<div class="input-group">
+							<div class="input-group-addon">Postleitzahl</div>
+							<input type="txt" class="form-control" id="requestedPLZ" placeholder="Postleitzahl">
+						</div>
+
+					<button type="submit" class="btn btn-primary" id="doRequest">Aktualisieren</button>
+				  </div>
+				</form>
+				</div>
+				<div id="remView" style="display:none">
+				    <h4>Zähler anzeigen</h4>
+					<form class="form-inline" onsubmit="return false;">
+						<label class="sr-only" for="meterSelect">Fremdzähler</label>
+						<div class="input-group">
+							<div class="input-group-addon"><span class="glyphicon glyphicon-sunglasses"></span></div>
+							<input type="txt" class="form-control" id="meterSelect" placeholder="Ethereum Adresse Stromzähler">
+						</div>
+						<button type="submit" class="btn btn-primary" id="doRemView">Öffnen</button>
+					</form>
+				</div>
+			</div>		
 		</div>
 		<hr/>
 		<div class="row" id="alerter">
@@ -48,7 +67,7 @@
 		<div class="row">
 			<h3>Zählerdaten</h3>
 			<table class="table table-striped">
-				<tr><th>Adresse</th><th><span class="gsiactive"></span></th></tr>
+				<tr><th>Adresse</th><th><span class="gsiactive"></span> <button class="btn btn-small btn-primary" id="swView"><span class="glyphicon glyphicon-scale"></span></button></th></tr>
 				<tr><td>Postleitzahl</td><td><span class="gsiplz"></span></td></tr>
 				<tr><td>Zählerstand</td><td><span class="gsivalue"></span> Wh</td></tr>
 				<tr><td>Ablesung</td><td><span class="gsitime"></span></td></tr>
@@ -65,12 +84,109 @@
 			<div class="col-md-4"><h4>Index-Werte</h4>
 			<p>Stromverbrauch, der bei einem Wert von <strong>über 50</strong> stattfindet, wird mit Grünstrom-Token belohnt.</p> 
 			<p>Stromverbrauch, der bei einem Indexwert von <strong>unter 50</strong> stattfindet, wird mit Graustrom-Token vergütet.</p>
+			<p>Sobald <strong>zwei Ablesungen</strong> vorhanden sind, die mindestens eine und höchstens 24 Stunden getrennt voneinander durchgeführt werden, erfolgt die <strong>Gutschrift der Tokens</strong>.</p>
+			<p>Sowohl Grünstrom als auch Graustrom-Tokens sind Ethereum <strong>Standard-Tokens</strong> (EIP-20) und können gehandelt, getauscht oder in andere Tokens gewechselt werden.</p>
 			</div>
 		</div>
+		<hr/>
+		<div class="row">
+			<h3>Handel/Transfer</h3>
+			    <h4>Transfer Grünstrom-Token</h4>
+				<form class="form-inline" onsubmit="return false;">				
+				  <div class="form-group">
+						<label class="sr-only" for="sendTokens">Grüntoken Versenden</label>			
+						<div class="input-group">
+						
+						  <input type="number" class="form-control" id="sendTokens" placeholder="Anzahl der Grünstrom-Tokens">
+						
+						  <div class="input-group-addon">P+</div>
+						</div>
+					
+			
+						<label class="sr-only" for="sendTo">Empfänger (Account)</label>
+						<div class="input-group">
+							<div class="input-group-addon">Account</div>
+							<input type="txt" class="form-control" id="sendTo" placeholder="Empfänger (0x123...)">
+						</div>
+
+					<button type="submit" class="btn btn-primary" id="doSend">versenden</button>
+				  </div>
+				</form>
+		</div>
+		<hr/>
+		<div class="row" id="txchartrow" style="display:none">
+			<h3>Kontoverlauf</h3>
+			<div id="txchart"></div>
+		</div>
+		<div class="row" style="border-top:1px solid #303030">
+			<h1>Informationen</h1>
+			<h2>GrünStromIndex</h2>
+			<p>Der <a href="https://mix.stromhaltig.de/gsi/" target="_blank">GrünstromIndex</a> wurde im Jahre 2013 entwickelt und ist seither ein fester Bestandteil in vielen Anwendungen und Geräten, die eine Verfügbarkeit von Stromerzeugung aus Wind- und Sonnenenergie der kommenden 36 Stunden benötigen.</p>
+			<p>Im Rahmen dieser Blockchain-Anwendung wird der GrünStromIndex für die Herausgabe von zwei Tokens verwendet.</p>
+			<h3>Grünstrom/Graustrom-Token</h3>
+			<p>
+			Bei den beiden Tokens handelt es sich um jeweils einen Ethereum-Smart-Contract, der der <a href="https://github.com/ethereum/EIPs/issues/20" target="_blank">EIP-20 Spezifikation</a> für Tokens folgt. Damit sind diese beiden Tokens kompatibel zu allen Verwendungsmöglichkeiten eines Ethereum-Tokens.  
+			</p>
+			<ul>
+				<li>Besitz</li>
+				<li>Senden an eine andere Adresse</li>
+				<li>Keine "Doppel-Ausgabe" (jeder Token existiert nur einmal und kann nicht vervielfältigt werden)</li>
+				<li>Handel/Umtausch (Tausch gegen andere Tokens)</li>
+			</ul>
+			<h3>Herausgabe von neuen Tokens</h3>
+			<p>
+			Um neue Tokens zu erhalten, ist der Zählerstand in Watt-Stunden zweimal im Abstand von mindestens einer und höchstens 24 Stunden einzugeben. Sobald die Transaktion in der Blockchain sichtbar ist wird ein sogenanntes Orakel prüfen, welche Werte der GrünStromIndex zwischen den beiden Ablesungen hatte und entsprechend dem Verbrauch Tokens ausgeben. 
+			</p>
+			<p>
+			Liegt das Zeitfenster zwischen den Ablesungen im Bereich von viel Grünstrom, so erhält man Grünstrom-Token.
+			</p>
+			<p>
+			Liegt das Zeitfenster zwischen den Ablesungen im Bereich von viel Graustrom, so erhält man Graustrom-Token.
+			</p>
+			<h2>Crypto-Währungen</h2>
+			<h3>Blockchain</h3>
+			<p>Bei einer Blockchain handelt es sich um eine verteilte Datenbank welche zwischen allen Nutzern geteilt wird. In dieser Datenbank wird eine Art Kontenbuch geführt, welches sämtliche Transaktionen beinhaltet.</p>
+			<p>Im Gegensatz zu Bitcoin ist es bei <a href="https://www.ethereum.org/" target="_blank">Ethereum</a> möglich, mit sogenannten Smart-Contracts zu arbeiten, welche jeweils einer Logik folgen. So existiert die Logik für die beiden Tokens, allerdings auch die Logik für das Auslesen des Grünstrom-Indexes in der Blockchain von Ethereum.</p>
+			<h3>Transaktionen</h3>
+			<p>Die Logik ist Programmcode, welcher wie eine Beschreibung an Transaktionen hängt. Die Beschreibung macht die Regeln des Smart-Contract aus. 
+			</p>
+			<p>
+			Vom Anwender ausgeführte Transaktionen:
+			<ul>
+			<li>Setzen der Postleitzahl</li>
+			<li>Setzen des Zählerstandes</li>
+			</ul>
+			Im Hintergrund ausgeführte Transaktionen:
+			<ul>			
+			<li>Gutschrift der Tokens bei der Herausgabe</li>
+			<li>Ersetzen des vorletzten durch den letzten Zählerstands zur Ermittlung der Verbrauchsmenge</li>
+			<li>Vergütung des Orakel</li>
+			</ul>
+			Vom Orakel ausgeführte Tranksationen:
+			<ul>
+			<li>Ermitteln des GrünStromIndex für Postleitzahl</li>
+			</ul>
+			</p>
+			<h3>Transparenz</h3>
+			<p>Diese Anwendung läuft in der öffentlichen Ethereum Blockchain und kann dadurch von jedem mit den entsprechenden Werkzeugen unabhängig von dieser Seite eingesehen werden. Die Tokens können getauscht, gehandelt, umgewandelt werden.</p>
+			<p>
+			Die Verträge:
+			<ul>
+				<li><a href="http://etherscan.io/address/0xAF6D36e6A376CDa44a5Ce9280507e5E24132C143" target="_blank">Hauptvertrag GSI</a></li>
+				<li><a href="http://etherscan.io/token/0xA37fB386486D54555dfCE08fba0D96981eEa0020" target="_blank">Grünstrom Token</li>
+				<li><a href="http://etherscan.io/token/0x70bcfbf17abe2d2c7bed8cdd72b160f39048fd23" target="_blank">Graustrom Token</li>
+			</ul>
+			</p>
+		</div>
 	</div>
+	 <footer class="footer" style="border-top:1px solid #303030;margin-top:20px;">
+      <div class="container">
+        <p class="text-muted"><a href="https://gitter.im/zoernert/gsi/" target="_blank">Gitter (Hilfe)</a>|<a href=https://zoernert.github.io/gsi/" target="_blank">FrontEnd (github.io)</a>|<a href="https://github.com/zoernert/gsi">Source (GIT)</a></p>
+      </div>
+    </footer>
     <script src="https://code.jquery.com/jquery.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-	<script src="js/app_loader.js"></script>
+	<!--<script src="js/app_loader.js"></script>-->
 	<script src="js/app.js"></script>
   </body>
 </html>

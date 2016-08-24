@@ -18,16 +18,15 @@ contract owned {
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
 contract GSIToken is owned  {
-
-    uint256 public sellPrice;
-    uint256 public buyPrice;
-		    /* Public variables of the token */
+    
+	/* Public variables of the token */
     string public standard = 'Token 0.1';
     string public name;
     string public symbol;
     uint8 public decimalUnits;
     uint256 public totalSupply;
-
+	GSIToken public exchangeToken;
+	
     mapping (address => bool) public frozenAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
@@ -87,32 +86,19 @@ contract GSIToken is owned  {
         FrozenFunds(target, freeze);
     }
 
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice)  {
+	function setExchangeToken(GSIToken _exchangeToken) {
 		if(msg.sender!=owner) throw;
-        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
-    }
-
-    function buy() {
-        uint amount = msg.value / buyPrice;                // calculates the amount
-        if (balanceOf[this] < amount) throw;               // checks if it has enough to sell
-        balanceOf[msg.sender] += amount;                   // adds the amount to buyer's balance
-        balanceOf[this] -= amount;                         // subtracts amount from seller's balance
-        Transfer(this, msg.sender, amount);                // execute an event reflecting the change
-    }
-
-    function sell(uint256 amount) {
-        if (balanceOf[msg.sender] < amount ) throw;        // checks if the sender has enough to sell
-        balanceOf[this] += amount;                         // adds the amount to owner's balance
-        balanceOf[msg.sender] -= amount;                   // subtracts the amount from seller's balance
-        if (!msg.sender.send(amount * sellPrice)) {        // sends ether to the seller. It's important
-            throw;                                         // to do this last to avoid recursion attacks
-        } else {
-            Transfer(msg.sender, this, amount);            // executes an event reflecting on the change
-        }               
-    }
-
-
+		exchangeToken=_exchangeToken;
+	}
+	    
+	function demintTokens(address target,uint8 amount)  {
+		if(msg.sender!=owner) throw;
+		if(balanceOf[target]<amount) throw;
+		balanceOf[msg.sender]+=amount;
+		balanceOf[target]-=amount;
+		Transfer(target,owner,amount);
+	}
+	
     /* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
@@ -129,8 +115,7 @@ contract GSIToken is owned  {
         spender.receiveApproval(msg.sender, _value, this, _extraData);
         return true;
     }
-
-
+	
     /* This unnamed function is called whenever someone tries to send ether to it */
     function () {
         throw;     // Prevents accidental sending of ether
@@ -146,6 +131,7 @@ contract GSI is owned {
 		GSIToken public greyToken;
 		uint256 public requiredGas;
 		uint256 public secondsBetweenReadings;
+		uint8 public pricegreengrey;
 		
 		mapping(address=>Reading) public lastReading;
 		mapping(address=>Reading) public requestReading;
@@ -166,8 +152,7 @@ contract GSI is owned {
 							0,
 							'P+',
 							this
-			);
-			//greenToken.mintToken(msg.sender,10000);
+			);			
 			greyToken = new GSIToken(
 							0,
 							'GreyPower',
@@ -175,6 +160,8 @@ contract GSI is owned {
 							'P-',
 							this
 			);		
+			greenToken.setExchangeToken(greyToken);
+			greyToken.setExchangeToken(greenToken);
 			oracles[msg.sender]=1;
 		}
 		
@@ -224,8 +211,8 @@ contract GSI is owned {
 		
 		function commitReading(address recipient) {
 		  if(oracles[msg.sender]!=1) throw;
-		  lastReading[recipient]=requestReading[recipient];
-		  owner.send(this.balance);
+		  lastReading[recipient]=requestReading[recipient];		  
+		  //owner.send(this.balance);
 		}
 		
 		function setGreenToken(GSIToken _greenToken) {
@@ -242,10 +229,21 @@ contract GSI is owned {
 			if(msg.sender!=owner) throw;
 			requiredGas=_requiredGas;
 		}
+
+		function setGreyGreenPrice(uint8 price) {
+			if(msg.sender!=owner) throw;
+			pricegreengrey=price;
+		}
 		
+		function convertGreyGreen(uint8 price,uint8 amount) {
+			if(price<pricegreengrey) throw;
+			if(greenToken.balanceOf(msg.sender)<amount*price) throw;
+			if(greyToken.balanceOf(msg.sender)<amount) throw;
+			greyToken.demintTokens(msg.sender,amount);
+		}
 		function() {
 			if(msg.value>0) {
-				owner.send(msg.value);
+				owner.send(this.balance);
 			}
 		}
 }

@@ -15,6 +15,7 @@ function doOracle(orcalizefor) {
 	console.log(lastReading,requestReading);
 	if(lastReading!=0) {
 		var distr=requestReading-lastReading;
+		if(distr==0) return;
 		// HTTP Request http://mix.stromhaltig.de/gsi/json/json_avg.php?plz=69256&t1=
 		var options = {
 			host: 'mix.stromhaltig.de',
@@ -51,13 +52,26 @@ function doOracle(orcalizefor) {
 }
 
 var gsi = web3.eth.contract(gsi_abi).at(deployment.gsi);
-var event = gsi.OracleRequest();
 
+lastBlock=1900000;
+try {
+	lastBlock=JSON.parse(fs.readFileSync("lastBlock.json"));
+	console.log("Starting from",lastBlock);
+} catch(e) {}
+
+var event = gsi.OracleRequest({},{fromBlock:lastBlock},function(e,r) {	
+	doOracle(r.args.target);
+	fs.writeFileSync("lastBlock.json",JSON.stringify(r.blockNumber));	
+	console.log("event()",r.args.target,r.blockNumber);
+});
+
+/*
 event.watch(function(error, result){
   if (!error) {
 	doOracle(result.args.target);	 
   }
 });
+*/
 //console.log(deployment.gsi);
-//doOracle('0xc0d972ea8a1dec399cccfb64d9221bb7e25c44d5');
+//doOracle('0xcef24b9c0bf6bd1245e4e40ff658979479e4c198');
 	
